@@ -132,6 +132,8 @@ type Project struct {
 	// Read-only. Array of Custom Field Settings (in compact form).
 	CustomFieldSettings []*CustomFieldSetting `json:"custom_field_settings,omitempty"`
 
+	// Deprecated in favour of calling the /memberships endpoint
+	//
 	// Read-only. Array of users who are members of this project.
 	Members []*User `json:"members,omitempty"`
 
