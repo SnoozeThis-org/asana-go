@@ -45,7 +45,7 @@ type membershipsRequestParams struct {
 	Member string `json:"member"`
 }
 
-func (p *Project) memberships(client *Client, options ...*Options) ([]*ProjectMembership,  *NextPage, error) {
+func (p *Project) Memberships(client *Client, options ...*Options) ([]*ProjectMembership,  *NextPage, error) {
 	client.trace("Listing memberships in project %s...\n", p.ID)
 	var result []*ProjectMembership
 
