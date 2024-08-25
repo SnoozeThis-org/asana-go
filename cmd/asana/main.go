@@ -62,7 +62,7 @@ func main() {
         client.DefaultOptions.Pretty = &True
     }
     client.Verbose = options.Verbose
-    client.DefaultOptions.Enable = []asana.Feature{asana.StringIDs, asana.NewSections, asana.NewTaskSubtypes}
+    client.DefaultOptions.Enable = []asana.Feature{asana.StringIDs, asana.NewSections, asana.NewTaskSubtypes, asana.ProjectPrivacySetting}
 
     // Load a task object
     if options.Task == nil {
