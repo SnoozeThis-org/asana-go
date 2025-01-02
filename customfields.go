@@ -200,7 +200,7 @@ type AddProjectLocalCustomFieldRequest struct {
 }
 
 func (p *Project) AddProjectLocalCustomField(client *Client, request *AddProjectLocalCustomFieldRequest) (*CustomFieldSetting, error) {
-	client.trace("Attach custom field %q to project %q", request.CustomField, p.ID)
+	client.trace("Attach custom field %q to project %q", request.CustomField.Name, p.ID)
 
 	// Custom request encoding
 	m := map[string]interface{}{}

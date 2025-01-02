@@ -29,6 +29,15 @@ const (
 	ViewTimeline View = "timeline"
 )
 
+// PrivacySetting indicates the privacy setting of a project
+type PrivacySetting string
+
+const (
+	PrivacySettingWorkspace PrivacySetting = "public_to_workspace"
+	PrivacySettingTeam      PrivacySetting = "private_to_team"
+	PrivacySettingPrivate   PrivacySetting = "private"
+)
+
 // ProjectBase contains the parts of Project which are not related to a specific instance
 type ProjectBase struct {
 
@@ -68,10 +77,10 @@ type ProjectBase struct {
 	// object.
 	Notes string `json:"notes,omitempty"`
 
-	// True if the project is public to the organization. If false, do not
-	// share this project with other users in this organization without
-	// explicitly checking to see if they have access.
-	Public *bool `json:"public,omitempty"`
+	// The privacy setting of the project. Can be one of: public_to_workspace, private_to_team, private
+	//
+	// Note: Administrators in your organization may restrict the values of privacy_setting.
+	PrivacySetting PrivacySetting `json:"privacy_setting,omitempty"`
 
 	// The day on which this project starts. This takes a date with format
 	// YYYY-MM-DD.
@@ -123,6 +132,8 @@ type Project struct {
 	// Read-only. Array of Custom Field Settings (in compact form).
 	CustomFieldSettings []*CustomFieldSetting `json:"custom_field_settings,omitempty"`
 
+	// Deprecated in favour of calling the /memberships endpoint
+	//
 	// Read-only. Array of users who are members of this project.
 	Members []*User `json:"members,omitempty"`
 
@@ -159,6 +170,12 @@ type Project struct {
 	// Create-only. The team that this project is shared with. This field only
 	// exists for projects in organizations.
 	Team *Team `json:"team,omitempty"`
+
+	// Deprecated in favour of PrivacySetting
+	// True if the project is public to the organization. If false, do not
+	// share this project with other users in this organization without
+	// explicitly checking to see if they have access.
+	Public *bool `json:"public,omitempty"`
 }
 
 func (p *Project) GetID() string {

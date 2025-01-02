@@ -15,11 +15,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/rs/xid"
-
+	"dario.cat/mergo"
 	"github.com/google/go-querystring/query"
-	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
+	"github.com/rs/xid"
 )
 
 const (
@@ -34,9 +33,10 @@ func (f Feature) String() string {
 }
 
 const (
-	NewTaskSubtypes Feature = "new_task_subtypes"
-	NewSections     Feature = "new_sections"
-	StringIDs       Feature = "string_ids"
+	NewTaskSubtypes       Feature = "new_task_subtypes"
+	NewSections           Feature = "new_sections"
+	StringIDs             Feature = "string_ids"
+	ProjectPrivacySetting Feature = "project_privacy_setting"
 )
 
 // Client is the root client for the Asana API. The nested HTTPClient should provide
