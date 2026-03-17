@@ -2,8 +2,8 @@ package asana
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"time"
 )
 
 type EnumValue struct {
@@ -19,16 +19,34 @@ type EnumValueBase struct {
 	// Read-only. The name of the object.
 	Name string `json:"name,omitempty"`
 
-	Color string `json:"color"`
+	// The color of the enum option. Defaults to ‘none’.
+	Color string `json:"color,omitempty"`
+}
+
+type DateValue struct {
+	Date     *Date      `json:"date,omitempty"`
+	DateTime *time.Time `json:"date_time,omitempty"`
 }
 
 type FieldType string
 
 // FieldTypes for CustomField.Type field
 const (
-	Text   FieldType = "text"
-	Enum   FieldType = "enum"
-	Number FieldType = "number"
+	FieldTypeText   FieldType = "text"
+	FieldTypeNumber FieldType = "number"
+	FieldTypeEnum   FieldType = "enum"
+
+	// https://forum.asana.com/t/new-custom-field-types/32244
+	FieldTypeMultiEnum FieldType = "multi_enum"
+	FieldTypeDate      FieldType = "date"
+	FieldTypeBoolean   FieldType = "boolean"
+
+	// https://forum.asana.com/t/introducing-people-custom-field/187166
+	FieldTypePeople FieldType = "people"
+
+	Text   FieldType = FieldTypeText   // Deprecated - use FieldTypeText
+	Number FieldType = FieldTypeNumber // Deprecated - use FieldTypeNumber
+	Enum   FieldType = FieldTypeEnum   // Deprecated - use FieldTypeEnum
 )
 
 type LabelPosition string
@@ -64,19 +82,12 @@ type CustomFieldBase struct {
 	// The description of the custom field.
 	Description string `json:"description,omitempty"`
 
-	// Opt In. The description of the custom field.
-	Enabled *bool `json:"enabled,omitempty"`
-
 	// The format of this custom field.
 	Format Format `json:"format,omitempty"`
 
 	// Conditional. This flag describes whether a follower of a task with this
 	// field should receive inbox notifications from changes to this field.
 	HasNotificationsEnabled *bool `json:"has_notifications_enabled,omitempty"`
-
-	// This flag describes whether this custom field is available to every container
-	// in the workspace. Before project-specific custom fields, this field was always true.
-	IsGlobalToWorkspace *bool `json:"is_global_to_workspace,omitempty"`
 
 	// Read-only. The name of the object.
 	Name string `json:"name,omitempty"`
@@ -90,7 +101,7 @@ type CustomFieldBase struct {
 	Precision *int `json:"precision,omitempty"`
 
 	// The type of the custom field. Must be one of the given values:
-	// 'text', 'enum', 'number'
+	// 'text', 'enum', 'number', 'multi_enum', 'date', 'boolean'
 	ResourceSubtype FieldType `json:"resource_subtype"`
 }
 
@@ -109,6 +120,14 @@ type CustomField struct {
 	// Only relevant for custom fields of type ‘Enum’. This array specifies
 	// the possible values which an enum custom field can adopt.
 	EnumOptions []*EnumValue `json:"enum_options,omitempty"`
+
+	// Read-only: This flag describes whether this custom field is available to every container
+	// in the workspace. Before project-specific custom fields, this field was always true.
+	IsGlobalToWorkspace *bool `json:"is_global_to_workspace,omitempty"`
+
+	// Determines whether the custom field is available for editing on a task
+	// (i.e. the field is associated with one of the task's parent projects)
+	Enabled *bool `json:"enabled,omitempty"`
 }
 
 type CustomFieldSetting struct {
@@ -162,8 +181,48 @@ func (p *Project) RemoveCustomFieldSetting(ctx context.Context, client *Client, 
 		"custom_field": customFieldID,
 	}
 
-	err := client.post(ctx, fmt.Sprintf("/projects/%s/removeCustomFieldSetting", p.ID), m, &json.RawMessage{})
+	err := client.post(ctx, fmt.Sprintf("/projects/%s/removeCustomFieldSetting", p.ID), m, nil)
 	return err
+}
+
+type ProjectLocalCustomField struct {
+	CustomFieldBase
+
+	// Only relevant for custom fields of type ‘Enum’. This array specifies
+	// the possible values which an enum custom field can adopt.
+	EnumOptions []*EnumValueBase `json:"enum_options,omitempty"`
+}
+
+type AddProjectLocalCustomFieldRequest struct {
+	CustomField  ProjectLocalCustomField `json:"custom_field"`
+	Important    bool                    `json:"is_important,omitempty"`
+	InsertBefore string                  `json:"insert_before,omitempty"`
+	InsertAfter  string                  `json:"insert_after,omitempty"`
+}
+
+func (p *Project) AddProjectLocalCustomField(client *Client, request *AddProjectLocalCustomFieldRequest) (*CustomFieldSetting, error) {
+	client.trace("Attach custom field %q to project %q", request.CustomField.Name, p.ID)
+
+	// Custom request encoding
+	m := map[string]interface{}{}
+	m["custom_field"] = request.CustomField
+	m["is_important"] = request.Important
+
+	if request.InsertAfter == "-" {
+		m["insert_after"] = nil
+	} else if request.InsertAfter != "" {
+		m["insert_after"] = request.InsertAfter
+	}
+
+	if request.InsertBefore == "-" {
+		m["insert_before"] = nil
+	} else if request.InsertBefore != "" {
+		m["insert_before"] = request.InsertBefore
+	}
+
+	result := &CustomFieldSetting{}
+	err := client.post(fmt.Sprintf("/projects/%s/addCustomFieldSetting", p.ID), m, result)
+	return result, err
 }
 
 type CreateCustomFieldRequest struct {
@@ -172,8 +231,8 @@ type CreateCustomFieldRequest struct {
 	// Required: The workspace to create a custom field in.
 	Workspace string `json:"workspace"`
 
-	// The discrete values the custom field can assume.
-	// Required if the custom field is of type ‘enum’.
+	// Conditional. Only relevant for custom fields of type enum.
+	// This array specifies the possible values which an enum custom field can adopt.
 	EnumOptions []*EnumValueBase `json:"enum_options,omitempty"`
 }
 
@@ -195,6 +254,11 @@ func (c *Client) CreateCustomField(ctx context.Context, request *CreateCustomFie
 type CustomFieldValue struct {
 	CustomField
 
+	// A string representation for the value of the custom field. Integrations
+	// that don't require the underlying type should use this field to read values.
+	// Using this field will future-proof an app against new custom field types.
+	DisplayValue *string `json:"display_value,omitempty"`
+
 	// Custom fields of type text will return a text_value property containing
 	// the string of text for the field.
 	TextValue *string `json:"text_value,omitempty"`
@@ -203,9 +267,23 @@ type CustomFieldValue struct {
 	// containing the number for the field.
 	NumberValue *float64 `json:"number_value,omitempty"`
 
-	// Custom fields of type enum will return an enum_value property
-	// containing an object that represents the selection of the enum value.
+	// Conditional. Only relevant for custom fields of type boolean.
+	BooleanValue *bool `json:"boolean_value,omitempty"`
+
+	// Conditional. Only relevant for custom fields of type date.
+	DateValue *DateValue `json:"date_value,omitempty"`
+
+	// Conditional. Only relevant for custom fields of type enum.
+	// This object is the chosen value of an enum custom field.
 	EnumValue *EnumValue `json:"enum_value,omitempty"`
+
+	// Conditional. Only relevant for custom fields of type multi_enum.
+	// This object is the chosen values of a multi_enum custom field.
+	MultiEnumValues []*EnumValue `json:"multi_enum_values,omitempty"`
+
+	// Conditional. Only relevant for custom fields of type people.
+	// This object is the chosen values of a people custom field.
+	PeopleValue []*User `json:"people_value,omitempty"`
 }
 
 // Fetch loads the full details for this CustomField

@@ -1,13 +1,14 @@
 module github.com/SnoozeThis-org/asana-go
 
-go 1.14
+go 1.24.4
 
 require (
-	github.com/google/go-querystring v1.0.0
-	github.com/imdario/mergo v0.3.9
-	github.com/jessevdk/go-flags v1.4.0
+	dario.cat/mergo v1.0.2
+	github.com/google/go-querystring v1.1.0
+	github.com/h2non/gock v1.2.0
 	github.com/pkg/errors v0.9.1
-	github.com/rs/xid v1.2.1
-	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	github.com/rs/xid v1.6.0
+	golang.org/x/oauth2 v0.30.0
 )
+
+require github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 // indirect

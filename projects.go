@@ -15,14 +15,28 @@ type ProjectStatus struct {
 	Author *User  `json:"author,omitempty"`
 }
 
-// Layout indicates the Project layout to use
+// View indicates the Project layout to use
 type View string
 
 const (
-	List     View = "list"
-	Board    View = "board"
-	Calendar View = "calendar"
-	Timeline View = "timeline"
+	List     View = "list"     // Deprecated - use ViewList
+	Board    View = "board"    // Deprecated - use ViewBoard
+	Calendar View = "calendar" // Deprecated - use ViewCalendar
+	Timeline View = "timeline" // Deprecated - use ViewTimeline
+
+	ViewList     View = "list"
+	ViewBoard    View = "board"
+	ViewCalendar View = "calendar"
+	ViewTimeline View = "timeline"
+)
+
+// PrivacySetting indicates the privacy setting of a project
+type PrivacySetting string
+
+const (
+	PrivacySettingWorkspace PrivacySetting = "public_to_workspace"
+	PrivacySettingTeam      PrivacySetting = "private_to_team"
+	PrivacySettingPrivate   PrivacySetting = "private"
 )
 
 // ProjectBase contains the parts of Project which are not related to a specific instance
@@ -30,7 +44,7 @@ type ProjectBase struct {
 
 	// True if the project is archived, false if not. Archived projects do not
 	// show in the UI by default and may be treated differently for queries.
-	Archived bool `json:"archived,omitempty"`
+	Archived *bool `json:"archived,omitempty"`
 
 	// Color of the object. Must be either null or one of: dark-pink, dark-
 	// green, dark-blue, dark-red, dark-teal, dark-brown, dark-orange, dark-
@@ -55,7 +69,7 @@ type ProjectBase struct {
 	Icon string `json:"icon,omitempty"`
 
 	// Opt In. Determines if the project is a template.
-	IsTemplate bool `json:"is_template,omitempty"`
+	IsTemplate *bool `json:"is_template,omitempty"`
 
 	// Read-only. The name of the object.
 	Name string `json:"name,omitempty"`
@@ -64,10 +78,10 @@ type ProjectBase struct {
 	// object.
 	Notes string `json:"notes,omitempty"`
 
-	// True if the project is public to the organization. If false, do not
-	// share this project with other users in this organization without
-	// explicitly checking to see if they have access.
-	Public bool `json:"public,omitempty"`
+	// The privacy setting of the project. Can be one of: public_to_workspace, private_to_team, private
+	//
+	// Note: Administrators in your organization may restrict the values of privacy_setting.
+	PrivacySetting PrivacySetting `json:"privacy_setting,omitempty"`
 
 	// The day on which this project starts. This takes a date with format
 	// YYYY-MM-DD.
@@ -91,14 +105,6 @@ type UpdateProjectRequest struct {
 	Owner        string                 `json:"owner,omitempty"`
 	CustomFields map[string]interface{} `json:"custom_fields,omitempty"`
 }
-
-type SectionMigrationStatus string
-
-const (
-	NotMigrated SectionMigrationStatus = "not_migrated"
-	InProgress  SectionMigrationStatus = "in_progress"
-	Completed   SectionMigrationStatus = "completed"
-)
 
 // Project represents a prioritized list of tasks in Asana. It exists in a
 // single workspace or organization and is accessible to a subset of users in
@@ -127,6 +133,8 @@ type Project struct {
 	// Read-only. Array of Custom Field Settings (in compact form).
 	CustomFieldSettings []*CustomFieldSetting `json:"custom_field_settings,omitempty"`
 
+	// Deprecated in favour of calling the /memberships endpoint
+	//
 	// Read-only. Array of users who are members of this project.
 	Members []*User `json:"members,omitempty"`
 
@@ -163,6 +171,16 @@ type Project struct {
 	// Create-only. The team that this project is shared with. This field only
 	// exists for projects in organizations.
 	Team *Team `json:"team,omitempty"`
+
+	// Deprecated in favour of PrivacySetting
+	// True if the project is public to the organization. If false, do not
+	// share this project with other users in this organization without
+	// explicitly checking to see if they have access.
+	Public *bool `json:"public,omitempty"`
+}
+
+func (p *Project) GetID() string {
+	return p.ID
 }
 
 // Fetch loads the full details for this Project

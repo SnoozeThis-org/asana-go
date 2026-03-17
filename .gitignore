@@ -1,2 +1,4 @@
 cmd/asana/asana
 /.idea
+
+.DS_Store

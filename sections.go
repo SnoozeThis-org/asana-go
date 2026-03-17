@@ -86,3 +86,17 @@ func (p *Project) InsertSection(ctx context.Context, client *Client, request *Se
 	err := client.post(ctx, fmt.Sprintf("projects/%s/sections/insert", p.ID), request, nil)
 	return err
 }
+
+type UpdateSectionRequest struct {
+	SectionBase
+	InsertAfter  string `json:"insert_after,omitempty"`
+	InsertBefore string `json:"insert_before,omitempty"`
+}
+
+func (s *Section) Update(client *Client, request *UpdateSectionRequest, opts ...*Options) (*Section, error) {
+	client.info("Updating section %s", s.ID)
+
+	result := &Section{}
+	err := client.put(fmt.Sprintf("/sections/%s", s.ID), request, result, opts...)
+	return result, err
+}

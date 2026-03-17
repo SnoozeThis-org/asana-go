@@ -95,12 +95,12 @@ func (w *Workspace) AllTags(ctx context.Context, client *Client, options ...*Opt
 }
 
 // CreateTag adds a new tag to a workspace
-func (w *Workspace) CreateTag(ctx context.Context, client *Client, tag *TagBase) (*Tag, error) {
+func (w *Workspace) CreateTag(ctx context.Context, client *Client, tag *TagBase, options ...*Options) (*Tag, error) {
 	client.info("Creating tag %q in %q\n", tag.Name, w.Name)
 
 	result := &Tag{}
 
-	err := client.post(ctx, fmt.Sprintf("/workspaces/%s/tags", w.ID), tag, result)
+	err := client.post(ctx, fmt.Sprintf("/workspaces/%s/tags", w.ID), tag, result, options...)
 	if err != nil {
 		return nil, err
 	}

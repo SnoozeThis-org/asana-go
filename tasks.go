@@ -2,7 +2,6 @@ package asana
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -176,8 +175,9 @@ type CreateMembership struct {
 type UpdateTaskRequest struct {
 	TaskBase
 
-	Assignee  string   `json:"assignee,omitempty"`  // User to which this task is assigned, or null if the task is unassigned.
-	Followers []string `json:"followers,omitempty"` // Array of users following this task.
+	Assignee     string                 `json:"assignee,omitempty"`  // User to which this task is assigned, or null if the task is unassigned.
+	Followers    []string               `json:"followers,omitempty"` // Array of users following this task.
+	CustomFields map[string]interface{} `json:"custom_fields,omitempty"`
 }
 
 // Task is the basic object around which many operations in Asana are
@@ -287,10 +287,10 @@ type Task struct {
 }
 
 // Fetch loads the full details for this Task
-func (t *Task) Fetch(ctx context.Context, client *Client) error {
+func (t *Task) Fetch(ctx context.Context, client *Client, opts ...*Options) error {
 	client.trace("Loading task details for %q", t.Name)
 
-	_, err := client.get(ctx, fmt.Sprintf("/tasks/%s", t.ID), nil, t)
+	_, err := client.get(ctx, fmt.Sprintf("/tasks/%s", t.ID), nil, t, opts...)
 	return err
 }
 
@@ -351,7 +351,7 @@ func (t *Task) AddProject(ctx context.Context, client *Client, request *AddProje
 		m["section"] = request.Section
 	}
 
-	err := client.post(ctx, fmt.Sprintf("/tasks/%s/addProject", t.ID), m, &json.RawMessage{})
+	err := client.post(ctx, fmt.Sprintf("/tasks/%s/addProject", t.ID), m, nil)
 	return err
 }
 
@@ -363,7 +363,7 @@ func (t *Task) RemoveProject(ctx context.Context, client *Client, projectID stri
 		"project": projectID,
 	}
 
-	err := client.post(ctx, fmt.Sprintf("/tasks/%s/removeProject", t.ID), m, &json.RawMessage{})
+	err := client.post(ctx, fmt.Sprintf("/tasks/%s/removeProject", t.ID), m, nil)
 	return err
 }
 
@@ -394,7 +394,7 @@ func (t *Task) SetParent(ctx context.Context, client *Client, request *SetParent
 		m["insert_before"] = request.InsertBefore
 	}
 
-	err := client.post(ctx, fmt.Sprintf("/tasks/%s/setParent", t.ID), m, &json.RawMessage{})
+	err := client.post(ctx, fmt.Sprintf("/tasks/%s/setParent", t.ID), m, nil)
 	return err
 }
 
@@ -409,7 +409,7 @@ type AddDependenciesRequest struct {
 func (t *Task) AddDependencies(ctx context.Context, client *Client, request *AddDependenciesRequest) error {
 	client.trace("Adding dependencies to task %q", t.ID)
 
-	err := client.post(ctx, fmt.Sprintf("/tasks/%s/addDependencies", t.ID), request, &json.RawMessage{})
+	err := client.post(ctx, fmt.Sprintf("/tasks/%s/addDependencies", t.ID), request, nil)
 	return err
 }
 
@@ -424,7 +424,7 @@ type AddDependentsRequest struct {
 func (t *Task) AddDependents(ctx context.Context, client *Client, request *AddDependentsRequest) error {
 	client.trace("Adding dependents to task %q", t.ID)
 
-	err := client.post(ctx, fmt.Sprintf("/tasks/%s/addDependents", t.ID), request, &json.RawMessage{})
+	err := client.post(ctx, fmt.Sprintf("/tasks/%s/addDependents", t.ID), request, nil)
 	return err
 }
 
@@ -477,6 +477,10 @@ func (t *Task) CreateSubtask(ctx context.Context, client *Client, task *Task) (*
 
 	err := client.post(ctx, fmt.Sprintf("/tasks/%s/subtasks", t.ID), task, result)
 	return result, err
+}
+
+func (t *Task) GetID() string {
+	return t.ID
 }
 
 // QueryTasks returns the compact task records for some filtered set of tasks.
