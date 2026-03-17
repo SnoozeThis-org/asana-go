@@ -93,10 +93,10 @@ type UpdateSectionRequest struct {
 	InsertBefore string `json:"insert_before,omitempty"`
 }
 
-func (s *Section) Update(client *Client, request *UpdateSectionRequest, opts ...*Options) (*Section, error) {
+func (s *Section) Update(ctx context.Context, client *Client, request *UpdateSectionRequest, opts ...*Options) (*Section, error) {
 	client.info("Updating section %s", s.ID)
 
 	result := &Section{}
-	err := client.put(fmt.Sprintf("/sections/%s", s.ID), request, result, opts...)
+	err := client.put(ctx, fmt.Sprintf("/sections/%s", s.ID), request, result, opts...)
 	return result, err
 }

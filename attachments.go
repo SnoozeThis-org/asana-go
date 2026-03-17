@@ -100,12 +100,12 @@ type ExternalAttachmentRequest struct {
 	ResourceSubtype string `json:"resource_subtype"`
 }
 
-func (t *Task) CreateExternalAttachment(client *Client, request *ExternalAttachmentRequest) (*Attachment, error) {
+func (t *Task) CreateExternalAttachment(ctx context.Context, client *Client, request *ExternalAttachmentRequest) (*Attachment, error) {
 	client.trace("Creating external attachment for %q", t.Name)
 	request.ResourceSubtype = "external"
 
 	result := &Attachment{}
-	err := client.post(fmt.Sprintf("/tasks/%s/attachments", t.ID), request, result)
+	err := client.post(ctx, fmt.Sprintf("/tasks/%s/attachments", t.ID), request, result)
 	if err != nil {
 		return nil, errors.Wrap(err, "Create external attachment")
 	}

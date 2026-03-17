@@ -200,7 +200,7 @@ type AddProjectLocalCustomFieldRequest struct {
 	InsertAfter  string                  `json:"insert_after,omitempty"`
 }
 
-func (p *Project) AddProjectLocalCustomField(client *Client, request *AddProjectLocalCustomFieldRequest) (*CustomFieldSetting, error) {
+func (p *Project) AddProjectLocalCustomField(ctx context.Context, client *Client, request *AddProjectLocalCustomFieldRequest) (*CustomFieldSetting, error) {
 	client.trace("Attach custom field %q to project %q", request.CustomField.Name, p.ID)
 
 	// Custom request encoding
@@ -221,7 +221,7 @@ func (p *Project) AddProjectLocalCustomField(client *Client, request *AddProject
 	}
 
 	result := &CustomFieldSetting{}
-	err := client.post(fmt.Sprintf("/projects/%s/addCustomFieldSetting", p.ID), m, result)
+	err := client.post(ctx, fmt.Sprintf("/projects/%s/addCustomFieldSetting", p.ID), m, result)
 	return result, err
 }
 

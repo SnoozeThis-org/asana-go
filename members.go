@@ -1,5 +1,7 @@
 package asana
 
+import "context"
+
 type AccessLevel string
 
 const (
@@ -48,7 +50,7 @@ type membershipsRequestParams struct {
     Member string `json:"member,omitempty"`
 }
 
-func (p *Project) Memberships(client *Client, options ...*Options) ([]*ProjectMembership, *NextPage, error) {
+func (p *Project) Memberships(ctx context.Context, client *Client, options ...*Options) ([]*ProjectMembership, *NextPage, error) {
     client.trace("Listing memberships in project %s...\n", p.ID)
     var result []*ProjectMembership
 
@@ -56,7 +58,7 @@ func (p *Project) Memberships(client *Client, options ...*Options) ([]*ProjectMe
     query := membershipsRequestParams{
         Parent: p.ID,
     }
-    nextPage, err := client.get("/memberships", query, &result, options...)
+    nextPage, err := client.get(ctx, "/memberships", query, &result, options...)
     return result, nextPage, err
 }
 
@@ -79,7 +81,7 @@ type createMembershipRequest struct {
     AccessLevel *AccessLevel `json:"access_level,omitempty"`
 }
 
-func (p *Project) CreateMembership(c *Client, req CreateMembershipRequest, options ...*Options) (*ProjectMembership, error) {
+func (p *Project) CreateMembership(ctx context.Context, c *Client, req CreateMembershipRequest, options ...*Options) (*ProjectMembership, error) {
     c.info("Creating Membership for entity %q in project %q\n", req.MemberID, p.ID)
 
     data := &createMembershipRequest{
@@ -89,6 +91,6 @@ func (p *Project) CreateMembership(c *Client, req CreateMembershipRequest, optio
     }
     result := &ProjectMembership{}
 
-    err := c.post("/memberships", data, result)
+    err := c.post(ctx, "/memberships", data, result)
     return result, err
 }
